@@ -19,12 +19,19 @@ jobs:
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Navigate to the app folder (clones it if it doesn't exist)
+            # 1. Move to home directory
+            cd /home/ubuntu
+            
+            # 2. Clone if it doesn't exist, otherwise pull latest
             if [ ! -d "hello-app" ]; then
               git clone git@github.com:Husain-Vora/hello-app.git
             fi
+            
+            # 3. Enter the folder and update
             cd hello-app
             git pull origin main
             npm install
-            # Restart the app using PM2
-            pm2 restart hello-app || pm2 start index.js --name "hello-app"
+            
+            # 4. Restart the app (pointing to the correct file location)
+            pm2 delete hello-app || true
+            pm2 start index.js --name "hello-app"
