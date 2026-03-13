@@ -1,9 +1,8 @@
-
 name: Node.js CD
 
 on:
   push:
-    branches: [ main ] # Runs every time you push to the main branch
+    branches: [ main ]
 
 jobs:
   deploy:
@@ -19,19 +18,26 @@ jobs:
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # 1. Move to home directory
+            # 1. Ensure we are starting from the base home directory
             cd /home/ubuntu
-            
-            # 2. Clone if it doesn't exist, otherwise pull latest
+
+            # 2. Setup the project folder if it doesn't exist
             if [ ! -d "hello-app" ]; then
               git clone git@github.com:Husain-Vora/hello-app.git
             fi
-            
-            # 3. Enter the folder and update
-            cd hello-app
+
+            # 3. Enter the folder, pull latest code, and install dependencies
+            cd /home/ubuntu/hello-app
             git pull origin main
             npm install
-            
-            # 4. Restart the app (pointing to the correct file location)
+
+            # 4. Global install of PM2 (just in case)
+            sudo npm install -g pm2
+
+            # 5. Restart the application
+            # We use 'pm2 start' from within the directory to ensure paths are correct
             pm2 delete hello-app || true
             pm2 start index.js --name "hello-app"
+            
+            # 6. Save PM2 list so it restarts on server reboot
+            pm2 save
