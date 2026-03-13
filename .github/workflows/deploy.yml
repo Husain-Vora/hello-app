@@ -1,0 +1,30 @@
+
+name: Node.js CD
+
+on:
+  push:
+    branches: [ main ] # Runs every time you push to the main branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Navigate to the app folder (clones it if it doesn't exist)
+            if [ ! -d "hello-app" ]; then
+              git clone git@github.com:Husain-Vora/hello-app.git
+            fi
+            cd hello-app
+            git pull origin main
+            npm install
+            # Restart the app using PM2
+            pm2 restart hello-app || pm2 start index.js --name "hello-app"
